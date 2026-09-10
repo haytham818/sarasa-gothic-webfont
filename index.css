@@ -1,2 +1,11 @@
 @import "./fonts/regular/index.css";
 @import "./fonts/semibold/index.css";
+
+.sarasa-ui-sc-font {
+  font-family: "Sarasa UI SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.sarasa-ui-sc-variable {
+  --font-sarasa-ui-sc: "Sarasa UI SC", "PingFang SC", "Microsoft YaHei",
+    sans-serif;
+}

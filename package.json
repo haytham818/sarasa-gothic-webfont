@@ -6,12 +6,19 @@
   "type": "module",
   "style": "./index.css",
   "exports": {
-    ".": "./index.css",
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    },
+    "./index.css": "./index.css",
     "./regular.css": "./fonts/regular/index.css",
     "./semibold.css": "./fonts/semibold/index.css"
   },
   "files": [
     "index.css",
+    "index.d.ts",
+    "index.js",
     "fonts/",
     "LICENSE",
     "README.md",

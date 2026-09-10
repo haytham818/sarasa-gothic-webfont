@@ -7,6 +7,8 @@ const source = JSON.parse(
   await readFile(join(repositoryRoot, "font-source.json"), "utf8"),
 );
 
+await verifyJavaScriptEntry();
+
 let totalFontFiles = 0;
 let totalFontBytes = 0;
 
@@ -60,4 +62,44 @@ console.log(
 
 function formatBytes(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
+}
+
+async function verifyJavaScriptEntry() {
+  const manifest = JSON.parse(
+    await readFile(join(repositoryRoot, "package.json"), "utf8"),
+  );
+  const rootExport = manifest.exports?.["."];
+
+  if (
+    rootExport?.types !== "./index.d.ts" ||
+    rootExport?.import !== "./index.js" ||
+    rootExport?.default !== "./index.js" ||
+    manifest.exports?.["./index.css"] !== "./index.css"
+  ) {
+    throw new Error(
+      "package.json does not expose the JavaScript and CSS entries correctly.",
+    );
+  }
+
+  const [javascript, stylesheet, declarations] = await Promise.all([
+    readFile(join(repositoryRoot, "index.js"), "utf8"),
+    readFile(join(repositoryRoot, "index.css"), "utf8"),
+    readFile(join(repositoryRoot, "index.d.ts"), "utf8"),
+  ]);
+
+  if (!javascript.includes('import "./index.css"')) {
+    throw new Error("The JavaScript entry does not load its stylesheet.");
+  }
+  for (const variant of source.variants) {
+    if (!stylesheet.includes(`@import "./fonts/${variant.name}/index.css"`)) {
+      throw new Error(
+        `The main stylesheet does not load the ${variant.name} font faces.`,
+      );
+    }
+  }
+  for (const property of ["className", "variable", "style"]) {
+    if (!javascript.includes(`${property}:`) || !declarations.includes(property)) {
+      throw new Error(`The JavaScript entry does not expose ${property}.`);
+    }
+  }
 }
