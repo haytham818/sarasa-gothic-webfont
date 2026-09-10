@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "baseUrl": "https://github.com/haytham818/sarasa-gothic-webfont/releases/download/font-assets-1.0.41",
+  "families": {
+    "ui-sc": {
+      "fontFamily": "Sarasa UI SC",
+      "version": "1.0.41",
+      "className": "sarasa-ui-sc-font",
+      "variable": "sarasa-ui-sc-variable",
+      "cssVariable": "--font-sarasa-ui-sc",
+      "fontStack": "\"Sarasa UI SC\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+      "variants": {
+        "200": {
+          "name": "extralight",
+          "weight": 200,
+          "archive": "sarasa-ui-sc-200.tar.gz",
+          "sha256": "f1f0b51db88010a19e82fbd7fc10d974627e2ec500f9e7b39103da7991189468",
+          "size": 12799960,
+          "fontFiles": 101
+        },
+        "300": {
+          "name": "light",
+          "weight": 300,
+          "archive": "sarasa-ui-sc-300.tar.gz",
+          "sha256": "e93781f26f94380a80ea40cd77d3fee511de5880a1c9e50814159126c967b879",
+          "size": 13260512,
+          "fontFiles": 105
+        },
+        "400": {
+          "name": "regular",
+          "weight": 400,
+          "archive": "sarasa-ui-sc-400.tar.gz",
+          "sha256": "a07482dd0081d6bd81f60088fc1ed5f2e68fa9fa303d50769c850b55e65b1df8",
+          "size": 13359919,
+          "fontFiles": 105
+        },
+        "600": {
+          "name": "semibold",
+          "weight": 600,
+          "archive": "sarasa-ui-sc-600.tar.gz",
+          "sha256": "3ed572016454025a70d2032191b73796f7c02f53d129a5fbb05e258d64faca88",
+          "size": 13456765,
+          "fontFiles": 105
+        },
+        "700": {
+          "name": "bold",
+          "weight": 700,
+          "archive": "sarasa-ui-sc-700.tar.gz",
+          "sha256": "0eb2ca3909cccb8081e18ad2107a81ba17d35e36fe66a27c521bf35b0d1807aa",
+          "size": 13530111,
+          "fontFiles": 106
+        }
+      }
+    }
+  }
+}

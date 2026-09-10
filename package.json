@@ -1,7 +1,7 @@
 {
   "name": "sarasa-gothic-webfont",
-  "version": "0.1.0",
-  "description": "Unicode-range webfont package for Sarasa UI SC.",
+  "version": "0.2.0",
+  "description": "Build-time downloader for Unicode-range Sarasa Gothic webfonts.",
   "license": "MIT AND OFL-1.1",
   "repository": {
     "type": "git",
@@ -12,47 +12,51 @@
     "url": "https://github.com/haytham818/sarasa-gothic-webfont/issues"
   },
   "type": "module",
-  "style": "./index.css",
   "exports": {
     ".": {
       "types": "./index.d.ts",
       "import": "./index.js",
       "default": "./index.js"
     },
-    "./index.css": "./index.css",
-    "./extralight.css": "./fonts/extralight/index.css",
-    "./light.css": "./fonts/light/index.css",
-    "./regular.css": "./fonts/regular/index.css",
-    "./semibold.css": "./fonts/semibold/index.css",
-    "./bold.css": "./fonts/bold/index.css"
+    "./config": {
+      "types": "./config.d.ts",
+      "import": "./config.js",
+      "default": "./config.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "sarasa-gothic-webfont": "./cli.js"
   },
   "files": [
-    "index.css",
     "index.d.ts",
     "index.js",
-    "fonts/",
+    "config.d.ts",
+    "config.js",
+    "cli.js",
+    "lib/",
+    "font-assets.json",
     "LICENSE",
     "LICENSE-MIT.txt",
     "LICENSE-OFL.txt",
-    "README.md",
-    "font-source.json"
-  ],
-  "sideEffects": [
-    "*.css",
-    "fonts/**/*.css"
+    "README.md"
   ],
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:assets": "node scripts/package-assets.mjs",
     "verify": "node scripts/verify.mjs",
-    "test": "pnpm run verify",
-    "prepack": "pnpm run verify"
+    "test": "pnpm run build:assets && pnpm run verify && node --test",
+    "prepack": "pnpm test"
+  },
+  "dependencies": {
+    "tar-stream": "3.2.1"
   },
   "devDependencies": {
     "7zip-bin": "5.2.0",
     "cn-font-split": "7.4.3"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "packageManager": "pnpm@11.20.0"
 }

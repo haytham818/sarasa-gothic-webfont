@@ -6,9 +6,13 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const source = JSON.parse(
   await readFile(join(repositoryRoot, "font-source.json"), "utf8"),
 );
+const assets = JSON.parse(
+  await readFile(join(repositoryRoot, "font-assets.json"), "utf8"),
+);
 
-await verifyJavaScriptEntry();
+await verifyPackageContract();
 await verifyLicenses();
+await verifyAssetManifest();
 
 let totalFontFiles = 0;
 let totalFontBytes = 0;
@@ -65,50 +69,115 @@ function formatBytes(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
 }
 
-async function verifyJavaScriptEntry() {
+async function verifyPackageContract() {
   const manifest = JSON.parse(
     await readFile(join(repositoryRoot, "package.json"), "utf8"),
   );
   const rootExport = manifest.exports?.["."];
+  const configExport = manifest.exports?.["./config"];
 
   if (
     rootExport?.types !== "./index.d.ts" ||
     rootExport?.import !== "./index.js" ||
-    rootExport?.default !== "./index.js" ||
-    manifest.exports?.["./index.css"] !== "./index.css"
+    rootExport?.default !== "./index.js"
   ) {
-    throw new Error(
-      "package.json does not expose the JavaScript and CSS entries correctly.",
-    );
+    throw new Error("package.json does not expose the JavaScript entry correctly.");
+  }
+  if (
+    configExport?.types !== "./config.d.ts" ||
+    configExport?.import !== "./config.js" ||
+    configExport?.default !== "./config.js"
+  ) {
+    throw new Error("package.json does not expose the config entry correctly.");
+  }
+  if (manifest.bin?.["sarasa-gothic-webfont"] !== "./cli.js") {
+    throw new Error("package.json does not expose the prepare CLI correctly.");
   }
 
-  const [javascript, stylesheet, declarations] = await Promise.all([
-    readFile(join(repositoryRoot, "index.js"), "utf8"),
-    readFile(join(repositoryRoot, "index.css"), "utf8"),
-    readFile(join(repositoryRoot, "index.d.ts"), "utf8"),
-  ]);
+  const [javascript, declarations, config, configDeclarations, cli] =
+    await Promise.all([
+      readFile(join(repositoryRoot, "index.js"), "utf8"),
+      readFile(join(repositoryRoot, "index.d.ts"), "utf8"),
+      readFile(join(repositoryRoot, "config.js"), "utf8"),
+      readFile(join(repositoryRoot, "config.d.ts"), "utf8"),
+      readFile(join(repositoryRoot, "cli.js"), "utf8"),
+    ]);
 
-  if (!javascript.includes('import "./index.css"')) {
-    throw new Error("The JavaScript entry does not load its stylesheet.");
+  if (javascript.includes(".css")) {
+    throw new Error("The JavaScript entry must not bundle generated font CSS.");
   }
-  for (const variant of source.variants) {
-    const exportName = `./${variant.name}.css`;
-    const exportTarget = `./fonts/${variant.name}/index.css`;
-
-    if (manifest.exports?.[exportName] !== exportTarget) {
-      throw new Error(
-        `package.json does not expose ${variant.name} at ${exportName}.`,
-      );
-    }
-    if (!stylesheet.includes(`@import "./fonts/${variant.name}/index.css"`)) {
-      throw new Error(
-        `The main stylesheet does not load the ${variant.name} font faces.`,
-      );
-    }
+  if (
+    !config.includes("defineConfig") ||
+    !configDeclarations.includes("defineConfig")
+  ) {
+    throw new Error("The config entry does not expose defineConfig().");
+  }
+  if (!cli.startsWith("#!/usr/bin/env node") || !cli.includes("prepare")) {
+    throw new Error("The CLI is missing its executable header or prepare command.");
   }
   for (const property of ["className", "variable", "style"]) {
     if (!javascript.includes(`${property}:`) || !declarations.includes(property)) {
       throw new Error(`The JavaScript entry does not expose ${property}.`);
+    }
+  }
+
+  const requiredFiles = [
+    "index.d.ts",
+    "index.js",
+    "config.d.ts",
+    "config.js",
+    "cli.js",
+    "lib/",
+    "font-assets.json",
+  ];
+  for (const file of requiredFiles) {
+    if (!manifest.files?.includes(file)) {
+      throw new Error(`package.json does not include ${file} in published files.`);
+    }
+  }
+  if (manifest.files.some((file) => file === "fonts/" || file.endsWith(".css"))) {
+    throw new Error("package.json must not publish generated font files or CSS.");
+  }
+}
+
+async function verifyAssetManifest() {
+  if (assets.schemaVersion !== 1) {
+    throw new Error("font-assets.json has an unsupported schemaVersion.");
+  }
+  const family = assets.families?.[source.id];
+  if (!family || family.fontFamily !== source.family || family.version !== source.version) {
+    throw new Error("font-assets.json does not match font-source.json.");
+  }
+  if (
+    !assets.baseUrl.startsWith(
+      "https://github.com/haytham818/sarasa-gothic-webfont/releases/download/",
+    )
+  ) {
+    throw new Error("font-assets.json must use this repository's GitHub Release assets.");
+  }
+
+  for (const variant of source.variants) {
+    const asset = family.variants?.[String(variant.weight)];
+    if (
+      !asset ||
+      asset.name !== variant.name ||
+      asset.weight !== variant.weight ||
+      !/^sarasa-ui-sc-\d+\.tar\.gz$/.test(asset.archive) ||
+      !/^[a-f0-9]{64}$/.test(asset.sha256) ||
+      !Number.isSafeInteger(asset.size) ||
+      asset.size <= 0
+    ) {
+      throw new Error(
+        `font-assets.json has invalid metadata for ${variant.name} (${variant.weight}).`,
+      );
+    }
+    const fontFiles = (
+      await readdir(join(repositoryRoot, "fonts", variant.name))
+    ).filter((file) => file.endsWith(".woff2"));
+    if (asset.fontFiles !== fontFiles.length) {
+      throw new Error(
+        `font-assets.json expects ${asset.fontFiles} files for ${variant.name}, but the repository contains ${fontFiles.length}.`,
+      );
     }
   }
 }

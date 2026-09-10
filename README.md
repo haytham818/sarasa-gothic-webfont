@@ -1,32 +1,62 @@
 # sarasa-gothic-webfont
 
-更纱黑体 UI (Sarasa UI) 的 Web 字体包
+更纱黑体 UI（Sarasa UI）的构建期 Web 字体下载器。
 
-使用 Unicode Range 拆分 WOFF2 文件，避免浏览器为少量页面文字下载完整中文字体
+npm 包只包含 API、CLI 和带 SHA-256 的字体制品清单。应用构建前根据配置下载所选字重；生成的 CSS 使用 Unicode Range，浏览器仍只请求页面实际使用字符对应的 WOFF2 分片。
 
-字体来自 [Sarasa Gothic](https://github.com/be5invis/Sarasa-Gothic)，遵循 SIL Open Font License 1.1
+字体来自 [Sarasa Gothic](https://github.com/be5invis/Sarasa-Gothic)。
 
-提供的 SC 正体字重:
-
-- 200 (extralight)
-- 300 (light)
-- 400 (regular)
-- 600 (semibold)
-- 700 (bold)
-
-## 使用
-
-以下以 `pnpm` 为例：
+## 安装
 
 ```bash
 pnpm add sarasa-gothic-webfont
 ```
 
-主入口适用于支持从 JavaScript 导入 CSS 的构建工具，并提供 `className`、`variable` 和 `style`
+## 配置
 
-以 React/Next.js 为例:
+在项目根目录创建 `sarasa-font.config.mjs`：
+
+```js
+import { defineConfig } from "sarasa-gothic-webfont/config";
+
+export default defineConfig({
+  outDir: "src/generated/sarasa-fonts",
+  families: {
+    "ui-sc": {
+      weights: [400, 600],
+    },
+  },
+});
+```
+
+Sarasa UI SC 提供以下正体字重：200、300、400、600、700。
+
+将生成目录加入项目的 `.gitignore`：
+
+```gitignore
+src/generated/sarasa-fonts/
+```
+
+在应用构建前准备字体：
+
+```json
+{
+  "scripts": {
+    "fonts": "sarasa-gothic-webfont prepare",
+    "predev": "pnpm fonts",
+    "prebuild": "pnpm fonts"
+  }
+}
+```
+
+下载缓存默认位于 `node_modules/.cache/sarasa-gothic-webfont`。可通过配置中的 `cacheDir` 改为另一个项目内相对路径。
+
+## 使用
+
+在应用的全局入口导入生成的样式表，然后使用组件式 API：
 
 ```tsx
+import "@/generated/sarasa-fonts/index.css";
 import { Sarasa_UI_SC } from "sarasa-gothic-webfont";
 
 const sarasaUiSc = Sarasa_UI_SC();
@@ -44,44 +74,44 @@ export default function RootLayout({
 }
 ```
 
-使用 CSS 变量时，将 `sarasaUiSc.variable` 添加到父元素，并通过 `var(--font-sarasa-ui-sc)` 引用字体栈.
+`Sarasa_UI_SC()` 返回 `className`、`variable` 和 `style`。使用 CSS 变量时，将 `variable` 添加到父元素，并通过 `var(--font-sarasa-ui-sc)` 引用字体栈。
 
-JavaScript 入口包含上述全部字重，`font-display` 固定为 `swap`，不接受 `subsets`、`weight` 或 `display` 选项.
+Storybook 应导入同一个生成文件：
 
-不使用 JavaScript 构建入口时，可以直接导入全部字重:
-
-```css
-@import "sarasa-gothic-webfont/index.css";
-
-:root {
-  font-family: "Sarasa UI SC", "PingFang SC", "Microsoft YaHei", sans-serif;
-}
+```tsx
+// .storybook/preview.tsx
+import "../src/generated/sarasa-fonts/index.css";
 ```
 
-也可以只导入需要的字重:
+如果配置文件使用其他名称或位置，可以显式指定：
 
-```css
-@import "sarasa-gothic-webfont/extralight.css"; /* 200 */
-@import "sarasa-gothic-webfont/light.css";      /* 300 */
-@import "sarasa-gothic-webfont/regular.css";    /* 400 */
-@import "sarasa-gothic-webfont/semibold.css";   /* 600 */
-@import "sarasa-gothic-webfont/bold.css";       /* 700 */
+```bash
+sarasa-gothic-webfont prepare --config config/fonts.mjs
 ```
+
+## 构建行为
+
+- 只下载配置中明确选择的 family 和 weight。
+- 每个归档在解包前核对字节数和 SHA-256。
+- 缓存校验失败时重新下载，不使用损坏文件。
+- 生成目录通过临时目录替换，失败时保留上一次可用输出。
+- 不在 `postinstall` 阶段联网，也不修改安装后的包目录。
 
 ## 维护
 
 ```bash
 pnpm install
 pnpm run build
-pnpm run verify
+pnpm run build:assets
+pnpm test
 pnpm pack --dry-run
 ```
 
-构建脚本会下载 `font-source.json` 指定的官方发行文件，核对 SHA-256 后，仅提取需要的 TTF 字重并生成 WOFF2 分片. 升级字体时，更新该文件中的版本、下载地址和校验值，再重新构建.
+`build` 从 `font-source.json` 指定的官方发行文件重建 WOFF2 分片；`build:assets` 为每个字重生成独立归档并更新 `font-assets.json`。发布 npm 版本前，对应的字体归档必须已上传到清单中的 GitHub Release。
 
 ## 许可证
 
-- `fonts/` 下的生成 CSS 和 WOFF2 字体使用 SIL Open Font License 1.1.
-- 其余原创代码和文档使用 MIT License.
+- 字体归档和仓库 `fonts/` 下的生成文件使用 SIL Open Font License 1.1。
+- 其余原创代码和文档使用 MIT License。
 
-完整授权范围和许可证文本见 [LICENSE](./LICENSE).
+完整授权范围和许可证文本见 [LICENSE](./LICENSE)。

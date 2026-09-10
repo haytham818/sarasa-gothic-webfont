@@ -12,6 +12,7 @@ permissions:
 jobs:
   publish-npm:
     name: Publish to npm
+    if: startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -45,6 +46,9 @@ jobs:
 
       - name: Verify generated package
         run: pnpm test
+
+      - name: Check asset manifest
+        run: git diff --exit-code -- font-assets.json
 
       - name: Publish package
         run: npm publish --access public --provenance

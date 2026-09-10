@@ -38,5 +38,8 @@ jobs:
       - name: Verify generated package
         run: pnpm test
 
+      - name: Check asset manifest
+        run: git diff --exit-code -- font-assets.json
+
       - name: Check package contents
         run: npm pack --dry-run --ignore-scripts --loglevel=error
