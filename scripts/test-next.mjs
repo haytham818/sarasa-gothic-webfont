@@ -1,5 +1,12 @@
 import { spawn } from "node:child_process";
-import { copyFile, mkdir, readFile, readdir, rm } from "node:fs/promises";
+import {
+  copyFile,
+  mkdir,
+  readFile,
+  readdir,
+  rm,
+  symlink,
+} from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -18,6 +25,11 @@ const archiveCache = join(
 
 try {
   await mkdir(archiveCache, { recursive: true });
+  await symlink(
+    repositoryRoot,
+    join(fixtureNodeModules, "sarasa-gothic-webfont"),
+    "dir",
+  );
   await copyFile(
     join(repositoryRoot, "dist/font-assets", variant.archive),
     join(archiveCache, `${variant.sha256}.tar.gz`),
