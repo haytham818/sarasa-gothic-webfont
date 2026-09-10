@@ -1,0 +1,38 @@
+{
+  "name": "sarasa-gothic-webfont",
+  "version": "0.1.0",
+  "description": "Self-hosted, Unicode-range webfont package for Sarasa UI SC.",
+  "license": "OFL-1.1",
+  "type": "module",
+  "style": "./index.css",
+  "exports": {
+    ".": "./index.css",
+    "./regular.css": "./fonts/regular/index.css",
+    "./semibold.css": "./fonts/semibold/index.css"
+  },
+  "files": [
+    "index.css",
+    "fonts/",
+    "LICENSE",
+    "README.md",
+    "font-source.json"
+  ],
+  "sideEffects": [
+    "*.css",
+    "fonts/**/*.css"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "verify": "node scripts/verify.mjs",
+    "test": "pnpm run verify",
+    "prepack": "pnpm run verify"
+  },
+  "devDependencies": {
+    "7zip-bin": "5.2.0",
+    "cn-font-split": "7.4.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@11.20.0"
+}
