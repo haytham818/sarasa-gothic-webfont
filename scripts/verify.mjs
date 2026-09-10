@@ -77,6 +77,8 @@ async function verifyPackageContract() {
   const configExport = manifest.exports?.["./config"];
   const nextExport = manifest.exports?.["./next"];
   const nextConfigExport = manifest.exports?.["./next/config"];
+  const viteExport = manifest.exports?.["./vite"];
+  const viteConfigExport = manifest.exports?.["./vite/config"];
 
   if (
     rootExport?.types !== "./index.d.ts" ||
@@ -106,6 +108,20 @@ async function verifyPackageContract() {
   ) {
     throw new Error("package.json does not expose the Next.js config entry correctly.");
   }
+  if (
+    viteExport?.types !== "./vite.d.ts" ||
+    viteExport?.import !== "./vite.js" ||
+    viteExport?.default !== "./vite.js"
+  ) {
+    throw new Error("package.json does not expose the Vite font entry correctly.");
+  }
+  if (
+    viteConfigExport?.types !== "./vite-config.d.ts" ||
+    viteConfigExport?.import !== "./vite-config.js" ||
+    viteConfigExport?.default !== "./vite-config.js"
+  ) {
+    throw new Error("package.json does not expose the Vite config entry correctly.");
+  }
   if (manifest.bin?.["sarasa-gothic-webfont"] !== "./cli.js") {
     throw new Error("package.json does not expose the prepare CLI correctly.");
   }
@@ -119,6 +135,10 @@ async function verifyPackageContract() {
     nextDeclarations,
     nextConfig,
     nextConfigDeclarations,
+    vite,
+    viteDeclarations,
+    viteConfig,
+    viteConfigDeclarations,
     cli,
   ] =
     await Promise.all([
@@ -130,6 +150,10 @@ async function verifyPackageContract() {
       readFile(join(repositoryRoot, "next.d.ts"), "utf8"),
       readFile(join(repositoryRoot, "next-config.js"), "utf8"),
       readFile(join(repositoryRoot, "next-config.d.ts"), "utf8"),
+      readFile(join(repositoryRoot, "vite.js"), "utf8"),
+      readFile(join(repositoryRoot, "vite.d.ts"), "utf8"),
+      readFile(join(repositoryRoot, "vite-config.js"), "utf8"),
+      readFile(join(repositoryRoot, "vite-config.d.ts"), "utf8"),
       readFile(join(repositoryRoot, "cli.js"), "utf8"),
     ]);
 
@@ -155,6 +179,16 @@ async function verifyPackageContract() {
   ) {
     throw new Error("The Next.js config entry does not expose withSarasa().");
   }
+  if (
+    !vite.includes("@sarasa-gothic-webfont/generated") ||
+    !vite.includes("Sarasa_UI_SC") ||
+    !viteDeclarations.includes("Sarasa_UI_SC")
+  ) {
+    throw new Error("The Vite font entry does not load CSS and expose Sarasa_UI_SC().");
+  }
+  if (!viteConfig.includes("sarasa") || !viteConfigDeclarations.includes("sarasa")) {
+    throw new Error("The Vite config entry does not expose sarasa().");
+  }
   if (!cli.startsWith("#!/usr/bin/env node") || !cli.includes("prepare")) {
     throw new Error("The CLI is missing its executable header or prepare command.");
   }
@@ -173,6 +207,10 @@ async function verifyPackageContract() {
     "next.js",
     "next-config.d.ts",
     "next-config.js",
+    "vite.d.ts",
+    "vite.js",
+    "vite-config.d.ts",
+    "vite-config.js",
     "cli.js",
     "lib/",
     "font-assets.json",

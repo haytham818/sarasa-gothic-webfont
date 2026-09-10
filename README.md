@@ -1,6 +1,6 @@
 # sarasa-gothic-webfont
 
-更纱黑体 UI（Sarasa UI）的构建期 Web 字体下载器，提供 Next.js 自动集成和通用 CLI。
+更纱黑体 UI（Sarasa UI）的构建期 Web 字体下载器，提供 Next.js、Vite 自动集成和通用 CLI。
 
 npm 包只包含 API、CLI 和带 SHA-256 的字体制品清单。应用构建前根据配置下载所选字重；生成的 CSS 使用 Unicode Range，浏览器仍只请求页面实际使用字符对应的 WOFF2 分片。
 
@@ -68,6 +68,65 @@ export default function RootLayout({
 
 Next.js 集成不需要运行 `prepare`、创建字体配置文件或导入生成的 CSS。下载内容和生成文件都位于 `node_modules/.cache/sarasa-gothic-webfont`。
 
+## Vite
+
+在 Vite 配置中选择字重。插件会在 `vite dev` 和 `vite build` 启动时准备字体，并自动加载生成的样式：
+
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import { sarasa } from "sarasa-gothic-webfont/vite/config";
+
+export default defineConfig({
+  plugins: [
+    sarasa({
+      uiSc: {
+        weights: [400, 600],
+      },
+    }),
+  ],
+});
+```
+
+在应用入口使用字体：
+
+```ts
+import { Sarasa_UI_SC } from "sarasa-gothic-webfont/vite";
+
+const sarasaUiSc = Sarasa_UI_SC();
+
+document.documentElement.classList.add(sarasaUiSc.className);
+```
+
+Storybook 使用 Vite builder 时，将同一个插件加入 `.storybook/main.ts`：
+
+```ts
+import type { StorybookConfig } from "@storybook/nextjs-vite";
+import { mergeConfig } from "vite";
+import { sarasa } from "sarasa-gothic-webfont/vite/config";
+
+const config: StorybookConfig = {
+  framework: "@storybook/nextjs-vite",
+  async viteFinal(config) {
+    return mergeConfig(config, {
+      plugins: [
+        sarasa({
+          uiSc: {
+            weights: [400, 600],
+          },
+        }),
+      ],
+    });
+  },
+};
+
+export default config;
+```
+
+然后在 `.storybook/preview.tsx` 从 Vite 入口导入 `Sarasa_UI_SC`，把返回的 `className` 或 `variable` 应用到全局 decorator。
+
+Vite 集成不需要运行 `prepare`、创建字体配置文件或导入生成的 CSS。下载内容和生成文件都位于 `node_modules/.cache/sarasa-gothic-webfont`。
+
 ## 通用构建工具
 
 其他构建工具可以使用 CLI。在项目根目录创建 `sarasa-font.config.mjs`：
@@ -132,13 +191,6 @@ export default function RootLayout({
 
 `Sarasa_UI_SC()` 返回 `className`、`variable` 和 `style`。使用 CSS 变量时，将 `variable` 添加到父元素，并通过 `var(--font-sarasa-ui-sc)` 引用字体栈。
 
-Storybook 等独立构建入口应导入同一个生成文件：
-
-```tsx
-// .storybook/preview.tsx
-import "../src/generated/sarasa-fonts/index.css";
-```
-
 如果配置文件使用其他名称或位置，可以显式指定：
 
 ```bash
@@ -149,6 +201,7 @@ sarasa-gothic-webfont prepare --config config/fonts.mjs
 
 - 只下载配置中明确选择的 family 和 weight。
 - Next.js 适配器同时支持 Turbopack 和 Webpack。
+- Vite 适配器支持开发服务器和生产构建，包括使用 Vite builder 的 Storybook。
 - 每个归档在解包前核对字节数和 SHA-256。
 - 缓存校验失败时重新下载，不使用损坏文件。
 - 生成目录通过临时目录替换，失败时保留上一次可用输出。
