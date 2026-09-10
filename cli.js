@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { prepareFromConfigFile } from "./lib/prepare.js";
+import { prepareFromConfigFile } from "./lib/prepare-from-config.js";
 
 const help = `Usage: sarasa-gothic-webfont prepare [--config <path>]
 

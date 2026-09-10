@@ -1,7 +1,7 @@
 {
   "name": "sarasa-gothic-webfont",
-  "version": "0.2.0",
-  "description": "Build-time downloader for Unicode-range Sarasa Gothic webfonts.",
+  "version": "0.3.0",
+  "description": "Build-time integrations for Unicode-range Sarasa Gothic webfonts.",
   "license": "MIT AND OFL-1.1",
   "repository": {
     "type": "git",
@@ -23,6 +23,16 @@
       "import": "./config.js",
       "default": "./config.js"
     },
+    "./next": {
+      "types": "./next.d.ts",
+      "import": "./next.js",
+      "default": "./next.js"
+    },
+    "./next/config": {
+      "types": "./next-config.d.ts",
+      "import": "./next-config.js",
+      "default": "./next-config.js"
+    },
     "./package.json": "./package.json"
   },
   "bin": {
@@ -33,6 +43,10 @@
     "index.js",
     "config.d.ts",
     "config.js",
+    "next.d.ts",
+    "next.js",
+    "next-config.d.ts",
+    "next-config.js",
     "cli.js",
     "lib/",
     "font-assets.json",
@@ -44,16 +58,32 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:assets": "node scripts/package-assets.mjs",
+    "typecheck": "tsc",
     "verify": "node scripts/verify.mjs",
-    "test": "pnpm run build:assets && pnpm run verify && node --test",
+    "test": "pnpm run build:assets && pnpm run verify && pnpm run typecheck && node --test test/*.test.mjs && node scripts/test-next.mjs",
     "prepack": "pnpm test"
   },
   "dependencies": {
     "tar-stream": "3.2.1"
   },
+  "peerDependencies": {
+    "next": ">=16.0.0"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "7zip-bin": "5.2.0",
-    "cn-font-split": "7.4.3"
+    "@types/node": "22.20.2",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "cn-font-split": "7.4.3",
+    "next": "16.3.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "5.9.3"
   },
   "engines": {
     "node": ">=22.13"

@@ -75,6 +75,8 @@ async function verifyPackageContract() {
   );
   const rootExport = manifest.exports?.["."];
   const configExport = manifest.exports?.["./config"];
+  const nextExport = manifest.exports?.["./next"];
+  const nextConfigExport = manifest.exports?.["./next/config"];
 
   if (
     rootExport?.types !== "./index.d.ts" ||
@@ -90,16 +92,44 @@ async function verifyPackageContract() {
   ) {
     throw new Error("package.json does not expose the config entry correctly.");
   }
+  if (
+    nextExport?.types !== "./next.d.ts" ||
+    nextExport?.import !== "./next.js" ||
+    nextExport?.default !== "./next.js"
+  ) {
+    throw new Error("package.json does not expose the Next.js font entry correctly.");
+  }
+  if (
+    nextConfigExport?.types !== "./next-config.d.ts" ||
+    nextConfigExport?.import !== "./next-config.js" ||
+    nextConfigExport?.default !== "./next-config.js"
+  ) {
+    throw new Error("package.json does not expose the Next.js config entry correctly.");
+  }
   if (manifest.bin?.["sarasa-gothic-webfont"] !== "./cli.js") {
     throw new Error("package.json does not expose the prepare CLI correctly.");
   }
 
-  const [javascript, declarations, config, configDeclarations, cli] =
+  const [
+    javascript,
+    declarations,
+    config,
+    configDeclarations,
+    next,
+    nextDeclarations,
+    nextConfig,
+    nextConfigDeclarations,
+    cli,
+  ] =
     await Promise.all([
       readFile(join(repositoryRoot, "index.js"), "utf8"),
       readFile(join(repositoryRoot, "index.d.ts"), "utf8"),
       readFile(join(repositoryRoot, "config.js"), "utf8"),
       readFile(join(repositoryRoot, "config.d.ts"), "utf8"),
+      readFile(join(repositoryRoot, "next.js"), "utf8"),
+      readFile(join(repositoryRoot, "next.d.ts"), "utf8"),
+      readFile(join(repositoryRoot, "next-config.js"), "utf8"),
+      readFile(join(repositoryRoot, "next-config.d.ts"), "utf8"),
       readFile(join(repositoryRoot, "cli.js"), "utf8"),
     ]);
 
@@ -111,6 +141,19 @@ async function verifyPackageContract() {
     !configDeclarations.includes("defineConfig")
   ) {
     throw new Error("The config entry does not expose defineConfig().");
+  }
+  if (
+    !next.includes("@sarasa-gothic-webfont/generated") ||
+    !next.includes("Sarasa_UI_SC") ||
+    !nextDeclarations.includes("Sarasa_UI_SC")
+  ) {
+    throw new Error("The Next.js font entry does not load CSS and expose Sarasa_UI_SC().");
+  }
+  if (
+    !nextConfig.includes("withSarasa") ||
+    !nextConfigDeclarations.includes("withSarasa")
+  ) {
+    throw new Error("The Next.js config entry does not expose withSarasa().");
   }
   if (!cli.startsWith("#!/usr/bin/env node") || !cli.includes("prepare")) {
     throw new Error("The CLI is missing its executable header or prepare command.");
@@ -126,6 +169,10 @@ async function verifyPackageContract() {
     "index.js",
     "config.d.ts",
     "config.js",
+    "next.d.ts",
+    "next.js",
+    "next-config.d.ts",
+    "next-config.js",
     "cli.js",
     "lib/",
     "font-assets.json",

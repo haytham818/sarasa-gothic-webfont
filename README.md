@@ -1,6 +1,6 @@
 # sarasa-gothic-webfont
 
-更纱黑体 UI（Sarasa UI）的构建期 Web 字体下载器。
+更纱黑体 UI（Sarasa UI）的构建期 Web 字体下载器，提供 Next.js 自动集成和通用 CLI。
 
 npm 包只包含 API、CLI 和带 SHA-256 的字体制品清单。应用构建前根据配置下载所选字重；生成的 CSS 使用 Unicode Range，浏览器仍只请求页面实际使用字符对应的 WOFF2 分片。
 
@@ -12,9 +12,65 @@ npm 包只包含 API、CLI 和带 SHA-256 的字体制品清单。应用构建�
 pnpm add sarasa-gothic-webfont
 ```
 
-## 配置
+## Next.js
 
-在项目根目录创建 `sarasa-font.config.mjs`：
+Next.js 16 可以在构建配置中选择字重。适配器会在 `next dev` 和 `next build` 启动时准备字体，并为 Turbopack 和 Webpack 自动加载生成的样式。
+
+```js
+// next.config.mjs
+import { withSarasa } from "sarasa-gothic-webfont/next/config";
+
+export default withSarasa({
+  uiSc: {
+    weights: [400, 600],
+  },
+});
+```
+
+已有 Next.js 配置时，通过第二个参数传入：
+
+```js
+import { withSarasa } from "sarasa-gothic-webfont/next/config";
+
+const nextConfig = {
+  reactStrictMode: true,
+};
+
+export default withSarasa(
+  {
+    uiSc: {
+      weights: [400, 600],
+    },
+  },
+  nextConfig,
+);
+```
+
+在根布局中使用字体：
+
+```tsx
+import { Sarasa_UI_SC } from "sarasa-gothic-webfont/next";
+
+const sarasaUiSc = Sarasa_UI_SC();
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="zh-CN" className={sarasaUiSc.className}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+Next.js 集成不需要运行 `prepare`、创建字体配置文件或导入生成的 CSS。下载内容和生成文件都位于 `node_modules/.cache/sarasa-gothic-webfont`。
+
+## 通用构建工具
+
+其他构建工具可以使用 CLI。在项目根目录创建 `sarasa-font.config.mjs`：
 
 ```js
 import { defineConfig } from "sarasa-gothic-webfont/config";
@@ -51,7 +107,7 @@ src/generated/sarasa-fonts/
 
 下载缓存默认位于 `node_modules/.cache/sarasa-gothic-webfont`。可通过配置中的 `cacheDir` 改为另一个项目内相对路径。
 
-## 使用
+### 使用生成的字体
 
 在应用的全局入口导入生成的样式表，然后使用组件式 API：
 
@@ -76,7 +132,7 @@ export default function RootLayout({
 
 `Sarasa_UI_SC()` 返回 `className`、`variable` 和 `style`。使用 CSS 变量时，将 `variable` 添加到父元素，并通过 `var(--font-sarasa-ui-sc)` 引用字体栈。
 
-Storybook 应导入同一个生成文件：
+Storybook 等独立构建入口应导入同一个生成文件：
 
 ```tsx
 // .storybook/preview.tsx
@@ -92,6 +148,7 @@ sarasa-gothic-webfont prepare --config config/fonts.mjs
 ## 构建行为
 
 - 只下载配置中明确选择的 family 和 weight。
+- Next.js 适配器同时支持 Turbopack 和 Webpack。
 - 每个归档在解包前核对字节数和 SHA-256。
 - 缓存校验失败时重新下载，不使用损坏文件。
 - 生成目录通过临时目录替换，失败时保留上一次可用输出。
