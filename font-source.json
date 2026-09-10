@@ -7,6 +7,18 @@
   "family": "Sarasa UI SC",
   "variants": [
     {
+      "name": "extralight",
+      "sourceFile": "SarasaUiSC-ExtraLight.ttf",
+      "weight": 200,
+      "localNames": ["Sarasa UI SC XLight"]
+    },
+    {
+      "name": "light",
+      "sourceFile": "SarasaUiSC-Light.ttf",
+      "weight": 300,
+      "localNames": ["Sarasa UI SC Light"]
+    },
+    {
       "name": "regular",
       "sourceFile": "SarasaUiSC-Regular.ttf",
       "weight": 400,
@@ -16,7 +28,13 @@
       "name": "semibold",
       "sourceFile": "SarasaUiSC-SemiBold.ttf",
       "weight": 600,
-      "localNames": ["Sarasa UI SC SemiBold", "Sarasa UI SC"]
+      "localNames": ["Sarasa UI SC SemiBold"]
+    },
+    {
+      "name": "bold",
+      "sourceFile": "SarasaUiSC-Bold.ttf",
+      "weight": 700,
+      "localNames": ["Sarasa UI SC Bold"]
     }
   ]
 }

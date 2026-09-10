@@ -8,6 +8,7 @@ const source = JSON.parse(
 );
 
 await verifyJavaScriptEntry();
+await verifyLicenses();
 
 let totalFontFiles = 0;
 let totalFontBytes = 0;
@@ -91,6 +92,14 @@ async function verifyJavaScriptEntry() {
     throw new Error("The JavaScript entry does not load its stylesheet.");
   }
   for (const variant of source.variants) {
+    const exportName = `./${variant.name}.css`;
+    const exportTarget = `./fonts/${variant.name}/index.css`;
+
+    if (manifest.exports?.[exportName] !== exportTarget) {
+      throw new Error(
+        `package.json does not expose ${variant.name} at ${exportName}.`,
+      );
+    }
     if (!stylesheet.includes(`@import "./fonts/${variant.name}/index.css"`)) {
       throw new Error(
         `The main stylesheet does not load the ${variant.name} font faces.`,
@@ -101,5 +110,25 @@ async function verifyJavaScriptEntry() {
     if (!javascript.includes(`${property}:`) || !declarations.includes(property)) {
       throw new Error(`The JavaScript entry does not expose ${property}.`);
     }
+  }
+}
+
+async function verifyLicenses() {
+  const manifest = JSON.parse(
+    await readFile(join(repositoryRoot, "package.json"), "utf8"),
+  );
+  const licenseFiles = ["LICENSE", "LICENSE-MIT.txt", "LICENSE-OFL.txt"];
+
+  if (manifest.license !== "MIT AND OFL-1.1") {
+    throw new Error(
+      "package.json must declare both the MIT and OFL-1.1 licenses.",
+    );
+  }
+
+  for (const file of licenseFiles) {
+    if (!manifest.files?.includes(file)) {
+      throw new Error(`package.json does not include ${file} in published files.`);
+    }
+    await readFile(join(repositoryRoot, file), "utf8");
   }
 }
